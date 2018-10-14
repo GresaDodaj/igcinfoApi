@@ -80,12 +80,11 @@ func main(){
 	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
 	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
 
-	//err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
-	//if err != nil {
-	//	log.Fatal("ListenAndServe: ", err)
-	//}
-
-	log.Fatal(http.ListenAndServe(":8080", router))
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+	
 }
 
 
