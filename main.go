@@ -80,11 +80,12 @@ func main(){
 	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
 	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
 
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-	
+	//err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	//if err != nil {
+	//	log.Fatal("ListenAndServe: ", err)
+	//}
+
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 
@@ -134,7 +135,7 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
 		URLs := mux.Vars(request)
 		if len(URLs) != 0 {
-			http.Error(w, "400 - Bad Request!", http.StatusBadRequest)
+			http.Error(w, "400 - Bad Request!", 400)
 			return
 		}
 
