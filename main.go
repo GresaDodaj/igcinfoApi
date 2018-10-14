@@ -14,6 +14,18 @@ import (
 	"time"
 )
 
+var startTime = time.Now()
+var urlMap = make(map[int]string)
+var mapID int
+var uniqueId int
+
+
+
+
+type url struct {
+	URL string `json:"url"`
+}
+var IGC_files []Track
 /*
 
 URLs for testing:
@@ -25,31 +37,16 @@ URLs for testing:
 
  */
 
-//time since the server starts
-var startTime = time.Now()
-var urlMap = make(map[int]string)
-var mapID int
-var uniqueId int
-
-
-type url struct {
-	URL string `json:"url"`
-}
-
-//saves the igc files tracks
-var IGC_files []Track
 
 type Track struct {
 	ID string	`json:"ID"`
 	IGC_Track igc.Track `json:"igcTrack"`
 }
-
 type MetaInfo struct {
 	Uptime string		`json:"uptime"`
 	Info string			`json:"info"`
 	Version string 		`json:"version"`
 }
-
 
 func findIndex(x map[int]string,y int)bool{
 	for k, _ := range x {
@@ -125,17 +122,14 @@ func GETapi(w http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(w).Encode(metaInfo)
 }
 
-//request is what we get from the client
+//req eshte gjithmone response qe e marrim nga nje klient
 func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
-	//request.method gives us the method selected by the client, in this api there are two methods
-	//that are implemented GET and POST, requests made for other methods will result to an error 501
-	//501 is an HTTP  error for not implemented
+	//request.method per me dit a e ka bo post a get
 	switch request.Method {
 
 	case "GET":
 		w.Header().Set("content-type", "application/json")
-
 
 		URLs := mux.Vars(request)
 		if len(URLs) != 0 {
@@ -152,20 +146,22 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 		json.NewEncoder(w).Encode(trackIDs)
 
 
+
+
 	case "POST":
-		// Set response content-type to JSON
+		//e bojna qe writerti me na qit json
 		w.Header().Set("content-type", "application/json")
 		// url qe pe shkrujme ne body si json e shkrun klienti ne post
 		URLt := &url{}
 
-		//Url is given to the server as JSON and now we decode it to a go structure
+
+
+		//tash ktu me decode e bon tkunderten filen json e kthen ne strukture
 		var error = json.NewDecoder(request.Body).Decode(URLt)
 		if error != nil {
 			http.Error(w,http.StatusText(400),400)
 			return
 		}
-
-		//making a random unique ID for the track files
 		rand.Seed(time.Now().UnixNano())
 
 		mapID = searchMap(urlMap,URLt.URL)
@@ -221,26 +217,24 @@ func getApiIgcID(w http.ResponseWriter, request *http.Request) {
 
 	URLt := mux.Vars(request)
 	if len(URLt) != 1 {
-		http.Error(w, "400 - Bad Request!", 400)
+		http.Error(w, "400 - Bad Request!", http.StatusBadRequest)
 		return
 	}
 
 	if URLt["id"] == "" {
-		http.Error(w, "400 - Bad Request!", 400)
+		http.Error(w, "400 - Bad Request!", http.StatusBadRequest)
 		return
 	}
 
 	for i := range IGC_files {
-		//The requested meta information about a particular track based on the ID given in the url
-		//checking if the meta information about it is in memory if so the meta information will be returned
-		//otherwise it will return error 404, not found
+		//id qe e shkrun nalt  a osht najnjo prej idve qe i kena marr na
 		if IGC_files[i].ID == URLt["id"] {
 			tDate := IGC_files[i].IGC_Track.Date.String()
 			tPilot := IGC_files[i].IGC_Track.Pilot
 			tGlider := IGC_files[i].IGC_Track.GliderType
 			tGliderId := IGC_files[i].IGC_Track.GliderID
 			tTrackLength := fmt.Sprintf("%f",trackLength(IGC_files[i].IGC_Track))
-	
+			w.Header().Set("content-type","application/json")
 			fmt.Fprint(w,"{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderId+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
 		}else{
 			http.Error(w,"",404)
@@ -257,20 +251,20 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 	URLs := mux.Vars(request)
 	if len(URLs) != 2 {
 		w.Header().Set("content-type", "application/json")
-		http.Error(w, "Error 400 : Bad Request!", 400)
+		http.Error(w, "Error 400 : Bad Request!", http.StatusBadRequest)
 		return
 	}
 
 
 	if URLs["id"] == "" {
 		w.Header().Set("content-type", "application/json")
-		http.Error(w, "Error 400 : Bad Request!\n You did not enter an ID.", 400)
+		http.Error(w, "Error 400 : Bad Request!\n You did not enter an ID.", http.StatusBadRequest)
 		return
 	}
 
 	if URLs["field"] == "" {
 		w.Header().Set("content-type", "application/json")
-		http.Error(w, "Error 400 : Bad Request!\n You did not  enter a field.", 400)
+		http.Error(w, "Error 400 : Bad Request!\n You did not  enter a field.", http.StatusBadRequest)
 		return
 	}
 
@@ -293,7 +287,7 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 				fmt.Fprint(w,val)
 			} else {
 
-				//http.Error(w, "Error 404 : File not found! \n The field you requested is not in our database!", 404)
+
 				http.Error(w, "", 404)
 
 				return
@@ -305,7 +299,7 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 }
 
 
-//function calculating the total  distance of the flight, from the start point until end point(geographical coordinates)
+
 func trackLength(track igc.Track) float64 {
 
 	totalDistance := 0.0
@@ -316,7 +310,6 @@ func trackLength(track igc.Track) float64 {
 
 	return totalDistance
 }
-// function that returns the current uptime of the service, format as specified by ISO 8601.
 func FormatSince(t time.Time) string {
 	const (
 		Decisecond = 100 * time.Millisecond
