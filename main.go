@@ -177,7 +177,9 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 			}
 
 		} else{
-			uniqueId = searchMap(urlMap,URLt.URL)
+			http.Error(w,"400 Bad Request - The track you entered is already in our database!",400)
+			fmt.Fprintf(w,"That track has this ID: %d", searchMap(urlMap,URLt.URL))
+			return
 		}
 
 		track, err := igc.ParseLocation(URLt.URL)
