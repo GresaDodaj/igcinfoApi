@@ -80,10 +80,12 @@ func main(){
 	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
 	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
 
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+	//err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	//if err != nil {
+	//	log.Fatal("ListenAndServe: ", err)
+	//}
+
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 
@@ -164,23 +166,7 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 		}
 		rand.Seed(time.Now().UnixNano())
 
-		mapID = searchMap(urlMap,URLt.URL)
-		initialID := rand.Intn(100)
 
-		if mapID == -1{
-			if findIndex(urlMap,initialID){
-				uniqueId = initialID
-				urlMap[uniqueId] = URLt.URL
-			}else{
-				uniqueId = rand.Intn(100)
-				urlMap[uniqueId] = URLt.URL
-			}
-
-		} else{
-			http.Error(w,"400 Bad Request - The track you entered is already in our database!",400)
-			fmt.Fprintf(w,"That track has this ID: %d", searchMap(urlMap,URLt.URL))
-			return
-		}
 
 		track, err := igc.ParseLocation(URLt.URL)
 		if err != nil {
@@ -189,9 +175,28 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 			return
 		}
 
+
+		mapID = searchMap(urlMap,URLt.URL)
+		initialID := rand.Intn(100)
+
+		if mapID == -1{
+			if findIndex(urlMap,initialID){
+				uniqueId = initialID
+				urlMap[uniqueId] = URLt.URL
+			} else{
+				uniqueId = rand.Intn(100)
+				urlMap[uniqueId] = URLt.URL
+			}
+
+		} else {
+			uniqueId = searchMap(urlMap,URLt.URL)
+		}
+
+
 		igcFile := Track{}
 		igcFile.ID = strconv.Itoa(uniqueId)
 		igcFile.IGC_Track = track
+
 
 		if findIndex(urlMap,initialID){
 
@@ -199,7 +204,7 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 		}
 
 
-		fmt.Fprint(w,"{\n\"id\": \""+igcFile.ID+"\"\n }")
+		fmt.Fprint(w,"{\n\t\"id\": \""+igcFile.ID+"\"\n}")
 
 
 		//not implemented methods-->status:501
