@@ -77,11 +77,11 @@ func main(){
 	router := mux.NewRouter()
 
 	router.HandleFunc("/igcinfo/", IGCinfo)
-	router.HandleFunc("/igcinfo/api",GETapi)
-	router.HandleFunc("/igcinfo/api/igc",getApiIGC)
+	router.HandleFunc("/igcinfo/api/",GETapi)
+	router.HandleFunc("/igcinfo/api/igc/",getApiIGC)
 	//me kllapa id edhe field se jon variabile
-	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
-	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
+	router.HandleFunc("/igcinfo/api/igc/{id}/", getApiIgcID)
+	router.HandleFunc("/igcinfo/api/igc/{id}/{field}/", getApiIgcIDField)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
 	if err != nil {
