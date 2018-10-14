@@ -240,7 +240,7 @@ func getApiIgcID(w http.ResponseWriter, request *http.Request) {
 			tGlider := IGC_files[i].IGC_Track.GliderType
 			tGliderId := IGC_files[i].IGC_Track.GliderID
 			tTrackLength := fmt.Sprintf("%f",trackLength(IGC_files[i].IGC_Track))
-
+	
 			fmt.Fprint(w,"{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderId+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
 		}else{
 			http.Error(w,"",404)
