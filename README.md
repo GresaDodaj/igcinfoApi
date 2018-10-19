@@ -94,7 +94,7 @@ Response:
 
 ## Deployment
 
-Deployed in Heroku: https://igcapi.herokuapp.com/
+Deployed in Heroku: https://igcinfo-2018-imt2681.herokuapp.com/igcinfo/api/igc
 
 
 
