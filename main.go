@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/marni/goigc"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,15 +10,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/marni/goigc"
 )
+
 //time since the server starts
 var startTime = time.Now()
 var urlMap = make(map[int]string)
 var mapID int
+var initialID int
 var uniqueId int
-
-
-
 
 type url struct {
 	URL string `json:"url"`
@@ -31,21 +31,21 @@ var IGC_files []Track
 
 //Struct that saves the ID and igcTrack data
 type Track struct {
-	ID string	`json:"ID"`
+	ID        string    `json:"ID"`
 	IGC_Track igc.Track `json:"igcTrack"`
 }
 
 //Struct that saves meta information about the server
 type MetaInfo struct {
-	Uptime string		`json:"uptime"`
-	Info string			`json:"info"`
-	Version string 		`json:"version"`
+	Uptime  string `json:"uptime"`
+	Info    string `json:"info"`
+	Version string `json:"version"`
 }
 
 // this function returns true if the index is not found and false otherwise
-func findIndex(x map[int]string,y int)bool{
+func findIndex(x map[int]string, y int) bool {
 	for k, _ := range x {
-		if k == y{
+		if k == y {
 			return false
 		}
 	}
@@ -53,32 +53,29 @@ func findIndex(x map[int]string,y int)bool{
 }
 
 //this function the key of the string if the map contains it, or -1 if the map does not contain the string
-func searchMap(x map[int]string,y string)int{
+func searchMap(x map[int]string, y string) int {
 
 	for k, v := range x {
-		if v==y{
+		if v == y {
 			return k
 		}
 	}
 	return -1
 }
 
-func main(){
-
+func main() {
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/igcinfo/", IGCinfo)
-	router.HandleFunc("/igcinfo/api",GETapi)
-	router.HandleFunc("/igcinfo/api/igc",getApiIGC)
+	router.HandleFunc("/igcinfo/api", GETapi)
+	router.HandleFunc("/igcinfo/api/igc", getApiIGC)
 	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
 	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
 
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		log.Fatal(err)
 	}
-
 
 }
 
@@ -92,8 +89,6 @@ func GetAddr() string {
 	}
 	return ":" + port
 }
-
-
 
 func IGCinfo(w http.ResponseWriter, r *http.Request) {
 
@@ -143,76 +138,65 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
 		json.NewEncoder(w).Encode(trackIDs)
 
-
-
-
 	case "POST":
 		// Set response content-type to JSON
 		w.Header().Set("content-type", "application/json")
 
 		URLt := &url{}
 
-
-
 		//Url is given to the server as JSON and now we decode it to a go structure
 		var error = json.NewDecoder(request.Body).Decode(URLt)
 		if error != nil {
-			http.Error(w,http.StatusText(400),400)
+			http.Error(w, http.StatusText(400), 400)
 			return
 		}
 
 		//making a random unique ID for the track files
 		rand.Seed(time.Now().UnixNano())
 
-
-
 		track, err := igc.ParseLocation(URLt.URL)
 		if err != nil {
 
-			http.Error(w,"Bad request!\nMalformed URL!",400)
+			http.Error(w, "Bad request!\nMalformed URL!", 400)
 			return
 		}
 
+		mapID = searchMap(urlMap, URLt.URL)
+		initialID = rand.Intn(100)
 
-		mapID = searchMap(urlMap,URLt.URL)
-		initialID := rand.Intn(100)
-
-		if mapID == -1{
-			if findIndex(urlMap,initialID){
+		if mapID == -1 {
+			if findIndex(urlMap, initialID) {
 				uniqueId = initialID
 				urlMap[uniqueId] = URLt.URL
-			} else{
+
+				igcFile := Track{}
+				igcFile.ID = strconv.Itoa(uniqueId)
+				igcFile.IGC_Track = track
+				IGC_files = append(IGC_files, igcFile)
+				fmt.Fprint(w, "{\n\t\"id\": \""+igcFile.ID+"\"\n}")
+				return
+			} else {
+				rand.Seed(time.Now().UnixNano())
 				uniqueId = rand.Intn(100)
 				urlMap[uniqueId] = URLt.URL
+				igcFile := Track{}
+				igcFile.ID = strconv.Itoa(uniqueId)
+				igcFile.IGC_Track = track
+				IGC_files = append(IGC_files, igcFile)
+				fmt.Fprint(w, "{\n\t\"id\": \""+igcFile.ID+"\"\n}")
+				return
 			}
-
 		} else {
-			uniqueId = searchMap(urlMap,URLt.URL)
+			uniqueId = searchMap(urlMap, URLt.URL)
+			fmt.Fprint(w, "{\n\t\"id\": \""+fmt.Sprintf("%d", uniqueId)+"\"\n}")
+			return
 		}
-
-
-		igcFile := Track{}
-		igcFile.ID = strconv.Itoa(uniqueId)
-		igcFile.IGC_Track = track
-
-
-		if findIndex(urlMap,initialID){
-
-			IGC_files = append(IGC_files, igcFile)
-		}
-
-
-		fmt.Fprint(w,"{\n\t\"id\": \""+igcFile.ID+"\"\n}")
-
-
-		//not implemented methods-->status:501
 
 	default:
 		http.Error(w, "This method is not implemented!", 501)
 		return
 
 	}
-
 
 }
 
@@ -240,20 +224,17 @@ func getApiIgcID(w http.ResponseWriter, request *http.Request) {
 			tPilot := IGC_files[i].IGC_Track.Pilot
 			tGlider := IGC_files[i].IGC_Track.GliderType
 			tGliderId := IGC_files[i].IGC_Track.GliderID
-			tTrackLength := fmt.Sprintf("%f",trackLength(IGC_files[i].IGC_Track))
-			w.Header().Set("content-type","application/json")
-			fmt.Fprint(w,"{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderId+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
-		}else{
-			http.Error(w,"",404)
+			tTrackLength := fmt.Sprintf("%f", trackLength(IGC_files[i].IGC_Track))
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, "{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderId+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
+		} else {
+			http.Error(w, "", 404)
 		}
 	}
-
 
 }
 
 func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
-
-
 
 	URLs := mux.Vars(request)
 	if len(URLs) != 2 {
@@ -261,7 +242,6 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "Error 400 : Bad Request!", http.StatusBadRequest)
 		return
 	}
-
 
 	if URLs["id"] == "" {
 		w.Header().Set("content-type", "application/json")
@@ -275,25 +255,23 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-
 	for i := range IGC_files {
 		if IGC_files[i].ID == URLs["id"] {
 
-			mapping := map[string]string {
-				"pilot" : IGC_files[i].IGC_Track.Pilot,
-				"glider" : IGC_files[i].IGC_Track.GliderType,
-				"glider_id" : IGC_files[i].IGC_Track.GliderID,
-				"track_length" : fmt.Sprintf("%f",trackLength(IGC_files[i].IGC_Track)),
-				"h_date" : IGC_files[i].IGC_Track.Date.String(),
+			mapping := map[string]string{
+				"pilot":        IGC_files[i].IGC_Track.Pilot,
+				"glider":       IGC_files[i].IGC_Track.GliderType,
+				"glider_id":    IGC_files[i].IGC_Track.GliderID,
+				"track_length": fmt.Sprintf("%f", trackLength(IGC_files[i].IGC_Track)),
+				"h_date":       IGC_files[i].IGC_Track.Date.String(),
 			}
 
 			field := URLs["field"]
 			field = strings.ToLower(field)
 
 			if val, ok := mapping[field]; ok {
-				fmt.Fprint(w,val)
+				fmt.Fprint(w, val)
 			} else {
-
 
 				http.Error(w, "", 404)
 
@@ -304,7 +282,6 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 
 	}
 }
-
 
 //function calculating the total  distance of the flight, from the start point until end point(geographical coordinates)
 func trackLength(track igc.Track) float64 {
@@ -317,6 +294,7 @@ func trackLength(track igc.Track) float64 {
 
 	return totalDistance
 }
+
 // function that returns the current uptime of the service, format as specified by ISO 8601.
 func FormatSince(t time.Time) string {
 	const (
