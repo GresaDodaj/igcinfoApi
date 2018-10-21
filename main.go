@@ -73,8 +73,11 @@ func main() {
 	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
 	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
 
-	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Fatal(err)
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	//	if err := http.ListenAndServe(":8080", router); err != nil {
+	if err != nil {
+		//log.Fatal(err)
+		log.Fatal("ListenAndServe: ", err)
 	}
 
 }
@@ -84,7 +87,7 @@ func GetAddr() string {
 	var port = os.Getenv("PORT")
 
 	if port == "" {
-		port = "4747"
+		port = "8080"
 		fmt.Println("No port  variable detected, defaulting to " + port)
 	}
 	return ":" + port
