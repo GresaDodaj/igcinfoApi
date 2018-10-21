@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 func Test_IGCinfo(test *testing.T) {
 
 	testServer := httptest.NewServer(http.HandlerFunc(IGCinfo))
@@ -25,7 +24,7 @@ func Test_IGCinfo(test *testing.T) {
 	}
 
 	if response.StatusCode != http.StatusNotFound {
-		test.Errorf("StatusNotFound %d, received %d. ",404, response.StatusCode)
+		test.Errorf("StatusNotFound %d, received %d. ", 404, response.StatusCode)
 		return
 	}
 
@@ -33,7 +32,7 @@ func Test_IGCinfo(test *testing.T) {
 
 func Test_getApiIGC_NotImplemented(test *testing.T) {
 
-	testServer := httptest.NewServer(http.HandlerFunc(getApiIGC))
+	testServer := httptest.NewServer(http.HandlerFunc(getAPIIGC))
 	defer testServer.Close()
 
 	client := &http.Client{}
@@ -55,19 +54,16 @@ func Test_getApiIGC_NotImplemented(test *testing.T) {
 
 }
 
-
-
 func Test_getApiIgcID_Malformed(test *testing.T) {
 
-	testServer := httptest.NewServer(http.HandlerFunc(getApiIgcID))
+	testServer := httptest.NewServer(http.HandlerFunc(getAPIIgcID))
 	defer testServer.Close()
 
-	testCases := []string {
+	testCases := []string{
 		testServer.URL,
 		testServer.URL + "/blla/",
 		testServer.URL + "/blla/123/",
 	}
-
 
 	for _, tstring := range testCases {
 		response, err := http.Get(testServer.URL)
@@ -81,19 +77,17 @@ func Test_getApiIgcID_Malformed(test *testing.T) {
 		}
 	}
 }
-
 
 func Test_getApiIgcIDField_MalformedURL(test *testing.T) {
 
-	testServer := httptest.NewServer(http.HandlerFunc(getApiIgcIDField))
+	testServer := httptest.NewServer(http.HandlerFunc(getAPIIgcIDField))
 	defer testServer.Close()
 
-	testCases := []string {
+	testCases := []string{
 		testServer.URL,
 		testServer.URL + "/blla/",
 		testServer.URL + "/blla/123/",
 	}
-
 
 	for _, tstring := range testCases {
 		response, err := http.Get(testServer.URL)
@@ -107,4 +101,3 @@ func Test_getApiIgcIDField_MalformedURL(test *testing.T) {
 		}
 	}
 }
-

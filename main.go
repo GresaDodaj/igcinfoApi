@@ -20,22 +20,22 @@ var startTime = time.Now()
 var urlMap = make(map[int]string)
 var mapID int
 var initialID int
-var uniqueId int
+var uniqueID int
 
 type url struct {
 	URL string `json:"url"`
 }
 
-//saves the igc files tracks
-var IGC_files []Track
+//IGCfiles saves the igc files tracks
+var IGCfiles []Track
 
-//Struct that saves the ID and igcTrack data
+//Track is a struct that saves the ID and igcTrack data
 type Track struct {
-	ID        string    `json:"ID"`
-	IGC_Track igc.Track `json:"igcTrack"`
+	ID       string    `json:"ID"`
+	IGCtrack igc.Track `json:"igcTrack"`
 }
 
-//Struct that saves meta information about the server
+//MetaInfo is a struct that saves meta information about the server
 type MetaInfo struct {
 	Uptime  string `json:"uptime"`
 	Info    string `json:"info"`
@@ -44,7 +44,7 @@ type MetaInfo struct {
 
 // this function returns true if the index is not found and false otherwise
 func findIndex(x map[int]string, y int) bool {
-	for k, _ := range x {
+	for k := range x {
 		if k == y {
 			return false
 		}
@@ -69,9 +69,9 @@ func main() {
 
 	router.HandleFunc("/igcinfo/", IGCinfo)
 	router.HandleFunc("/igcinfo/api", GETapi)
-	router.HandleFunc("/igcinfo/api/igc", getApiIGC)
-	router.HandleFunc("/igcinfo/api/igc/{id}", getApiIgcID)
-	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getApiIgcIDField)
+	router.HandleFunc("/igcinfo/api/igc", getAPIIGC)
+	router.HandleFunc("/igcinfo/api/igc/{id}", getAPIIgcID)
+	router.HandleFunc("/igcinfo/api/igc/{id}/{field}", getAPIIgcIDField)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), router)
 	//	if err := http.ListenAndServe(":8080", router); err != nil {
@@ -82,7 +82,7 @@ func main() {
 
 }
 
-//this function gets the port assigned by heroku
+//GetAddr is a  function that  gets the port assigned by heroku
 func GetAddr() string {
 	var port = os.Getenv("PORT")
 
@@ -92,13 +92,13 @@ func GetAddr() string {
 	}
 	return ":" + port
 }
-
+//IGCinfo is a function that responds to requests made to the root
 func IGCinfo(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "Error 404: Page not found!", http.StatusNotFound)
 	return
 }
-
+//GETapi returns the meta information of an igc track
 func GETapi(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
@@ -117,7 +117,7 @@ func GETapi(w http.ResponseWriter, request *http.Request) {
 }
 
 //request is what we get from the client
-func getApiIGC(w http.ResponseWriter, request *http.Request) {
+func getAPIIGC(w http.ResponseWriter, request *http.Request) {
 
 	//request.method gives us the method selected by the client, in this api there are two methods
 	//that are implemented GET and POST, requests made for other methods will result to an error 501
@@ -135,8 +135,8 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
 		trackIDs := make([]string, 0, 0)
 
-		for i := range IGC_files {
-			trackIDs = append(trackIDs, IGC_files[i].ID)
+		for i := range IGCfiles {
+			trackIDs = append(trackIDs, IGCfiles[i].ID)
 		}
 
 		json.NewEncoder(w).Encode(trackIDs)
@@ -169,31 +169,31 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
 		if mapID == -1 {
 			if findIndex(urlMap, initialID) {
-				uniqueId = initialID
-				urlMap[uniqueId] = URLt.URL
+				uniqueID = initialID
+				urlMap[uniqueID] = URLt.URL
 
 				igcFile := Track{}
-				igcFile.ID = strconv.Itoa(uniqueId)
-				igcFile.IGC_Track = track
-				IGC_files = append(IGC_files, igcFile)
-				fmt.Fprint(w, "{\n\t\"id\": \""+igcFile.ID+"\"\n}")
-				return
-			} else {
-				rand.Seed(time.Now().UnixNano())
-				uniqueId = rand.Intn(100)
-				urlMap[uniqueId] = URLt.URL
-				igcFile := Track{}
-				igcFile.ID = strconv.Itoa(uniqueId)
-				igcFile.IGC_Track = track
-				IGC_files = append(IGC_files, igcFile)
+				igcFile.ID = strconv.Itoa(uniqueID)
+				igcFile.IGCtrack = track
+				IGCfiles = append(IGCfiles, igcFile)
 				fmt.Fprint(w, "{\n\t\"id\": \""+igcFile.ID+"\"\n}")
 				return
 			}
-		} else {
-			uniqueId = searchMap(urlMap, URLt.URL)
-			fmt.Fprint(w, "{\n\t\"id\": \""+fmt.Sprintf("%d", uniqueId)+"\"\n}")
-			return
+				rand.Seed(time.Now().UnixNano())
+				uniqueID = rand.Intn(100)
+				urlMap[uniqueID] = URLt.URL
+				igcFile := Track{}
+				igcFile.ID = strconv.Itoa(uniqueID)
+				igcFile.IGCtrack = track
+				IGCfiles = append(IGCfiles, igcFile)
+				fmt.Fprint(w, "{\n\t\"id\": \""+igcFile.ID+"\"\n}")
+				return
+
 		}
+			uniqueID = searchMap(urlMap, URLt.URL)
+			fmt.Fprint(w, "{\n\t\"id\": \""+fmt.Sprintf("%d", uniqueID)+"\"\n}")
+			return
+
 
 	default:
 		http.Error(w, "This method is not implemented!", 501)
@@ -203,7 +203,7 @@ func getApiIGC(w http.ResponseWriter, request *http.Request) {
 
 }
 
-func getApiIgcID(w http.ResponseWriter, request *http.Request) {
+func getAPIIgcID(w http.ResponseWriter, request *http.Request) {
 
 	w.Header().Set("content-type", "application/json")
 
@@ -218,18 +218,18 @@ func getApiIgcID(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	for i := range IGC_files {
+	for i := range IGCfiles {
 		//The requested meta information about a particular track based on the ID given in the url
 		//checking if the meta information about it is in memory if so the meta information will be returned
 		//otherwise it will return error 404, not found
-		if IGC_files[i].ID == URLt["id"] {
-			tDate := IGC_files[i].IGC_Track.Date.String()
-			tPilot := IGC_files[i].IGC_Track.Pilot
-			tGlider := IGC_files[i].IGC_Track.GliderType
-			tGliderId := IGC_files[i].IGC_Track.GliderID
-			tTrackLength := fmt.Sprintf("%f", trackLength(IGC_files[i].IGC_Track))
+		if IGCfiles[i].ID == URLt["id"] {
+			tDate := IGCfiles[i].IGCtrack.Date.String()
+			tPilot := IGCfiles[i].IGCtrack.Pilot
+			tGlider := IGCfiles[i].IGCtrack.GliderType
+			tGliderID := IGCfiles[i].IGCtrack.GliderID
+			tTrackLength := fmt.Sprintf("%f", trackLength(IGCfiles[i].IGCtrack))
 			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, "{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderId+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
+			fmt.Fprint(w, "{\n\"H_date\": \""+tDate+"\",\n\"pilot\": \""+tPilot+"\",\n\"GliderType\": \""+tGlider+"\",\n\"Glider_ID\": \""+tGliderID+"\",\n\"track_length\": \""+tTrackLength+"\"\n}")
 		} else {
 			http.Error(w, "", 404)
 		}
@@ -237,7 +237,7 @@ func getApiIgcID(w http.ResponseWriter, request *http.Request) {
 
 }
 
-func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
+func getAPIIgcIDField(w http.ResponseWriter, request *http.Request) {
 
 	URLs := mux.Vars(request)
 	if len(URLs) != 2 {
@@ -258,15 +258,15 @@ func getApiIgcIDField(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	for i := range IGC_files {
-		if IGC_files[i].ID == URLs["id"] {
+	for i := range IGCfiles {
+		if IGCfiles[i].ID == URLs["id"] {
 
 			mapping := map[string]string{
-				"pilot":        IGC_files[i].IGC_Track.Pilot,
-				"glider":       IGC_files[i].IGC_Track.GliderType,
-				"glider_id":    IGC_files[i].IGC_Track.GliderID,
-				"track_length": fmt.Sprintf("%f", trackLength(IGC_files[i].IGC_Track)),
-				"h_date":       IGC_files[i].IGC_Track.Date.String(),
+				"pilot":        IGCfiles[i].IGCtrack.Pilot,
+				"glider":       IGCfiles[i].IGCtrack.GliderType,
+				"glider_id":    IGCfiles[i].IGCtrack.GliderID,
+				"track_length": fmt.Sprintf("%f", trackLength(IGCfiles[i].IGCtrack)),
+				"h_date":       IGCfiles[i].IGCtrack.Date.String(),
 			}
 
 			field := URLs["field"]
@@ -298,7 +298,7 @@ func trackLength(track igc.Track) float64 {
 	return totalDistance
 }
 
-// function that returns the current uptime of the service, format as specified by ISO 8601.
+// FormatSince is a function that returns the current uptime of the service, format as specified by ISO 8601.
 func FormatSince(t time.Time) string {
 	const (
 		Decisecond = 100 * time.Millisecond
